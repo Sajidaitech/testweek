@@ -73,6 +73,6 @@ app.param('collectionName', (req, res, next, collectionName) => {
                     })
                     })
 
-app.listen(3000, () => {
-    console.log('Express.js sercer running at localhost:3000')
-})
+const port = process.env.port || 3000;
+
+app.listen(port);
