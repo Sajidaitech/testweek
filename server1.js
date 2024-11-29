@@ -1,5 +1,6 @@
 const Collection = require('mongodb/lib/collection');
 const express = require('express');
+const path = require('path');
 
 const app = express()
 // config Express. js
@@ -13,6 +14,10 @@ app.use ((req,res, next) => {
 
     next();
 })
+
+var staticPath = path.resolve(__dirname, "images");
+app.use('/images',express.static(staticPath));
+
 const MongoClient = require('mongodb').MongoClient;
 let db;
 
