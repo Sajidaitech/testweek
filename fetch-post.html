@@ -13,23 +13,23 @@
     <p>The response: <span id='response'></span></p>
     <p>Error: <span id='error'></span></p>
     <script>
-        const newProduct = { title: 'new hvggh', price: 49 };
+       const newProduct = { title: 'new hvggh', price: 49 };
 
-        // set the url to your server and route
-        fetch('http://localhost:3000/collection/users', {
-            method: 'POST', // set the HTTP method as 'POST'
-            headers: {
-                'Content-Type': 'application/json', // set the data type as JSON
-            },
-            body: JSON.stringify(newProduct), // need to stringify the JSON object
-        })
-            .then(response => response.json())
-            .then(responseJSON => {
-                document.getElementById('response').innerText = JSON.stringify(responseJSON);
-            })
-            .catch((error) => {
-                document.getElementById('error').innerText = error;
-            });
+// Connect to your backend's `/collection/users` route
+fetch('http://localhost:3000/collection/users', {
+    method: 'POST',
+    headers: {
+        'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(newProduct),
+})
+    .then(response => response.json())
+    .then(responseJSON => {
+        document.getElementById('response').innerText = JSON.stringify(responseJSON);
+    })
+    .catch((error) => {
+        document.getElementById('error').innerText = error;
+    });
     </script>
 </body>
 

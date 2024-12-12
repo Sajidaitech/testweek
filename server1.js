@@ -1,83 +1,139 @@
-const Collection = require('mongodb/lib/collection');
-const express = require('express');
-const path = require('path');
+const express = require("express");
+const app = express();
+const { MongoClient } = require("mongodb");
+const helmet = require("helmet"); // Import helmet
 
-const app = express()
-// config Express. js
-app. use (express.json())
-app. set ('port', 3000)
-app.use ((req,res, next) => {
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader("Access-Control-Allow-Credentials", "true");
-    res.setHeader("Access-Control-Allow-Methods", "GET,HEAD,OPTIONS,POST,PUT");
-    res.setHeader("Access-Control-Allow-Headers", "Access-Control-Allow-Headers, Origin,Accept, X-Requested-With, Content-Type, Access-Control-Request-Method, Access-Control-Request-Headers");
+// Use Helmet for security headers
+app.use(
+  helmet.contentSecurityPolicy({
+    directives: {
+      defaultSrc: ["'self'"],
+      fontSrc: ["'self'", "data:", "http://localhost:3000"],
+    },
+  })
+);
 
-    next();
-})
+app.use(express.json());
+app.set("port", 3000);
+app.use((req, res, next) => {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Credentials", "true");
+  res.setHeader("Access-Control-Allow-Methods", "GET,HEAD,OPTIONS,POST,PUT");
+  res.setHeader(
+    "Access-Control-Allow-Headers",
+    "Access-Control-Allow-Headers, Origin,Accept, X-Requested-With, Content-Type, Access-Control-Request-Method, Access-Control-Request-Headers"
+  );
 
-var staticPath = path.resolve(__dirname, "images");
-app.use('/images',express.static(staticPath));
+  next();
+});
 
-const MongoClient = require('mongodb').MongoClient;
+// Function to log the current time
+function logCurrentTime() {
+  const time = new Date();
+  const options = {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  };
+
+  return time.toLocaleDateString("en-US", options);
+}
+
 let db;
+MongoClient.connect(
+  "mongodb+srv://sajidteech:Qatar2024@mongo.ovhek.mongodb.net/",
+  (err, client) => {
+    if (err) {
+      console.error("Failed to connect to MongoDB:", err);
+      process.exit(1);
+    }
+    db = client.db("Webstore");
+    console.log("Connected to MongoDB");
+  }
+);
 
-MongoClient.connect('mongodb+srv://sajidteech:Qatar2024@mongo.ovhek.mongodb.net/', (err, client) => {
- db = client.db('webstore');
-})
+app.get("/", (req, res) => {
+  res.send("Select a collection, e.g., /collection/messages");
+});
 
-app.get ('/' , (req, res, next) => {
-    res.send('Select a collection, e.g., /collection/messages')
-})
+app.param("collectionName", (req, res, next, collectionName) => {
+  req.collection = db.collection(collectionName);
+  return next();
+});
 
-app.param('collectionName', (req, res, next, collectionName) => {
-    req.collection = db.collection(collectionName);
-    return next()
-})
-// app.get('/collection/:collectionName', (req, res, next) => {
-//     req.collection.find({}).toArray((e, results)) => {
-//         if (e) return next(e)
-//             res.send(results)
-//     })
+app.get("/collection/:collectionName", (req, res, next) => {
+  req.collection.find({}).toArray((e, results) => {
+    if (e) return next(e);
+    res.send(results);
+  });
+});
 
-    app.get('/collection/:collectionName', (req, res, next) => {
-        req.collection.find({}).toArray ((e, results) => {
-        if (e) return next (e)
-        res.send(results)
-        })
-        })
-        app.post('/collection/:collectionName', (req, res, next) => {
-            req.collection.insert({}).toArray((e, results) => {
-            if (e) return next (e)
-            res.send(results)
-            })
-            })
+app.post("/collection/:collectionName", (req, res, next) => {
+  req.collection.insertOne(req.body, (e, result) => {
+    if (e) return next(e);
+    res.send(result.ops[0]);
+  });
+});
 
-            const ObjectID = require('mongodb').ObjectID;
-            app.get('/collection/:collectionName/:id', (req, res, next) => {
-            req.collection.findOne({ _id: new ObjectID(req.params.id) }, (e, result) => {
-            if (e) return next(e)
-            res.send(result)
-            })
-            })
-            app.put('/collection/:collectionName/:id', (req, res, next) => {
-                req.collection.update(
-                {_id: new ObjectID(req.params.id)},
-                {$set: req.body},
-                {safe: true, multi: false},
-                (e, result) => {
-                if (e) return next(e)
-                res.send((result.result.n === 1) ? {msg: 'success'} : {msg: 'error'})
-                })
-                })
-                app.delete('/collection/:collectionName/:id', (req, res, next) => {
-                    req.collection.deleteOne(
-                    {_id: ObjectID(req.params.id)},
-                    (e, result) => {
-                    if (e) return next(e)
-                    res.send((result.result.n === 1) ? {msg: 'success'} : {msg: 'error'})
-                    })
-                    })
+app.get("/collection/:collectionName/:id", (req, res, next) => {
+  req.collection.findOne({ _id: new ObjectID(req.params.id) }, (e, result) => {
+    if (e) return next(e);
+    res.send(result);
+  });
+});
 
-const port = process.env.port || 3000;
+app.put("/collection/:collectionName/:id", (req, res, next) => {
+  req.collection.updateOne(
+    { _id: new ObjectID(req.params.id) },
+    { $set: req.body },
+    { safe: true },
+    (e, result) => {
+      if (e) return next(e);
+      res.send(result.matchedCount === 1 ? { msg: "success" } : { msg: "error" });
+    }
+  );
+});
 
-app.listen(port);
+app.delete("/collection/:collectionName/:id", (req, res, next) => {
+  req.collection.deleteOne({ _id: new ObjectID(req.params.id) }, (e, result) => {
+    if (e) return next(e);
+    res.send(result.deletedCount === 1 ? { msg: "success" } : { msg: "error" });
+  });
+});
+
+app.post("/place-order", (req, res) => {
+  const ordersCollection = db.collection("orders");
+  const order = req.body;
+
+  if (
+    !order.firstName ||
+    !order.lastName ||
+    !order.address ||
+    !order.city ||
+    !order.state ||
+    !order.zip ||
+    !order.phone ||
+    !order.cart ||
+    order.cart.length === 0
+  ) {
+    return res.status(400).send({ msg: "Invalid order data" });
+  }
+
+  order.date = new Date();
+
+  ordersCollection.insertOne(order, (err, result) => {
+    if (err) {
+      console.error("Error placing order:", err);
+      return res.status(500).send({ msg: "Failed to place order" });
+    }
+    res.send({ msg: "Order placed successfully", orderId: result.insertedId });
+  });
+});
+
+const port = process.env.PORT || 5000;
+app.listen(port, () => {
+  console.log(`Server running on port ${port}`);
+});
