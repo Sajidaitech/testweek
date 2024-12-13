@@ -5,7 +5,7 @@ const cors = require('cors')
 const app = express()
 
 const corsOptions = {
-    origin: 'https://kogaweidner.github.io',
+    origin: 'https://sajidaitech.github.io/',
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     allowedHeaders: ['Content-Type']
 }
@@ -16,7 +16,7 @@ app.use(cors(corsOptions));
 app.use(express.json())
 app.set('port', 3000)
 app.use((req, res, next) => {
-    res.setHeader('Access-Control-Allow-Origin', 'https://kogaweidner.github.io'); // Allow only specific origin
+    res.setHeader('Access-Control-Allow-Origin', 'https://sajidaitech.github.io/'); // Allow only specific origin
     res.setHeader("Access-Control-Allow-Credentials", "true");
     res.setHeader("Access-Control-Allow-Methods", "GET,HEAD,OPTIONS,POST,PUT");
     res.setHeader("Access-Control-Allow-Headers", "Access-Control-Allow-Headers, Origin,Accept, X-Requested-With, Content-Type, Access-Control-Request-Method, Access-Control-Request-Headers");
@@ -30,8 +30,8 @@ const MongoClient = require('mongodb').MongoClient;
 
 let db;
 // Inside the connect code is the connection string of your server
-MongoClient.connect('mongodb+srv://sokolig:Wednesday@cluster0.n4bti.mongodb.net/', (err, client) => {
-    db = client.db('Classes')
+MongoClient.connect('mongodb+srv://sajidteech:Qatar2024@mongo.ovhek.mongodb.net/', (err, client) => {
+    db = client.db('webstore')
 })
 
 // Display message for root path to show that API is working
