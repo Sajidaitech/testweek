@@ -50,7 +50,7 @@ MongoClient.connect(
       console.error("Failed to connect to MongoDB:", err);
       process.exit(1);
     }
-    db = client.db("Webstore");
+    db = client.db("webstore");
     console.log("Connected to MongoDB");
   }
 );
@@ -133,7 +133,7 @@ app.post("/place-order", (req, res) => {
   });
 });
 
-const port = process.env.PORT || 5000;
+const port = process.env.PORT || 3000;
 app.listen(port, () => {
   console.log(`Server running on port ${port}`);
 });
