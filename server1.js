@@ -1,20 +1,8 @@
 const express = require("express");
 const app = express();
 const { MongoClient } = require("mongodb");
-//const helmet = require("helmet"); // Import helmet
-
-// // Use Helmet for security headers
-// app.use(
-//   helmet.contentSecurityPolicy({
-//     directives: {
-//       defaultSrc: ["'self'"],
-//       fontSrc: ["'self'", "data:", "http://localhost:3000"],
-//     },
-//   })
-// );
 
 app.use(express.json());
-app.set("port", 3000);
 app.use((req, res, next) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Credentials", "true");
