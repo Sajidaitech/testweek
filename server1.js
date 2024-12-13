@@ -1,139 +1,121 @@
-const express = require("express");
-const app = express();
-const { MongoClient } = require("mongodb");
-const helmet = require("helmet"); // Import helmet
+// Create Express.js instance
+var express = require("express")
+var path = require('path')  
+const cors = require('cors')
+const app = express()
 
-// Use Helmet for security headers
-app.use(
-  helmet.contentSecurityPolicy({
-    directives: {
-      defaultSrc: ["'self'"],
-      fontSrc: ["'self'", "data:", "http://localhost:3000"],
-    },
-  })
-);
-
-app.use(express.json());
-app.set("port", 3000);
-app.use((req, res, next) => {
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Credentials", "true");
-  res.setHeader("Access-Control-Allow-Methods", "GET,HEAD,OPTIONS,POST,PUT");
-  res.setHeader(
-    "Access-Control-Allow-Headers",
-    "Access-Control-Allow-Headers, Origin,Accept, X-Requested-With, Content-Type, Access-Control-Request-Method, Access-Control-Request-Headers"
-  );
-
-  next();
-});
-
-// Function to log the current time
-function logCurrentTime() {
-  const time = new Date();
-  const options = {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-  };
-
-  return time.toLocaleDateString("en-US", options);
+const corsOptions = {
+    origin: 'https://kogaweidner.github.io',
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    allowedHeaders: ['Content-Type']
 }
 
+app.use(cors(corsOptions));
+
+// Configuring Express.js
+app.use(express.json())
+app.set('port', 3000)
+app.use((req, res, next) => {
+    res.setHeader('Access-Control-Allow-Origin', 'https://kogaweidner.github.io'); // Allow only specific origin
+    res.setHeader("Access-Control-Allow-Credentials", "true");
+    res.setHeader("Access-Control-Allow-Methods", "GET,HEAD,OPTIONS,POST,PUT");
+    res.setHeader("Access-Control-Allow-Headers", "Access-Control-Allow-Headers, Origin,Accept, X-Requested-With, Content-Type, Access-Control-Request-Method, Access-Control-Request-Headers");
+
+    console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`); // General request logging
+    next();
+});
+
+// Connecting to MongoDB
+const MongoClient = require('mongodb').MongoClient;
+
 let db;
-MongoClient.connect(
-  "mongodb+srv://sajidteech:Qatar2024@mongo.ovhek.mongodb.net/",
-  (err, client) => {
-    if (err) {
-      console.error("Failed to connect to MongoDB:", err);
-      process.exit(1);
-    }
-    db = client.db("webstore");
-    console.log("Connected to MongoDB");
-  }
-);
+// Inside the connect code is the connection string of your server
+MongoClient.connect('mongodb+srv://sokolig:Wednesday@cluster0.n4bti.mongodb.net/', (err, client) => {
+    db = client.db('Classes')
+})
 
-app.get("/", (req, res) => {
-  res.send("Select a collection, e.g., /collection/messages");
-});
+// Display message for root path to show that API is working
+app.get('/', (req, res, next) => {
+    res.send("Select a collection, e.g., /collection/messages")
+})
 
+// Getting the collection name
 app.param("collectionName", (req, res, next, collectionName) => {
-  req.collection = db.collection(collectionName);
-  return next();
+    req.collection = db.collection(collectionName)
+    return next()
+})
+
+// Retrieve all objects from collection
+app.get('/collection/:collectionName', (req, res, next) => {
+    req.collection.find({}).toArray((e, results) => {
+        if (e) return next(e)
+        res.send(results)
+    })
+})
+
+app.post('/collection/:collectionName', (req, res, next) => {
+    req.collection.insertOne(req.body, (e, results) => {
+        if (e) return next(e)
+        console.log(`[${new Date().toISOString()}] POST to collection ${req.params.collectionName}:`, req.body); // Log POST data
+        res.send(results)
+    })
+})
+
+const ObjectID = require('mongodb').ObjectID;
+
+app.get('/collection/:collectionName/:id', (req, res, next) => {
+    req.collection.findOne({ _id: new ObjectID(req.params.id) }, (e, result) => {
+        if (e) return next(e)
+        res.send(result)
+    })
+})
+
+app.put('/collection/:collectionName/:id', (req, res, next) => {
+    req.collection.updateOne(
+        { _id: new ObjectID(req.params.id) },
+        { $set: req.body },
+        (e, result) => {
+            if (e) return next(e)
+            console.log(`[${new Date().toISOString()}] PUT to collection ${req.params.collectionName}, ID: ${req.params.id}:`, req.body); // Log PUT data
+            res.send({ msg: 'success' })
+        }
+    )
+})
+
+app.delete('/collection/:collectionName/:id', (req, res, next) => {
+    req.collection.deleteOne(
+        { _id: ObjectID(req.params.id) }, (e, result) => {
+            if (e) return next(e)
+            console.log(`[${new Date().toISOString()}] DELETE from collection ${req.params.collectionName}, ID: ${req.params.id}`); // Log DELETE action
+            res.send((result.result.n === 1) ?
+                { msg: 'success' } : { msg: 'error' })
+        }
+    )
+})
+
+// Example logging for specific routes
+app.post('/add-to-cart', (req, res) => {
+    const { itemId, quantity } = req.body;
+    console.log(`[${new Date().toISOString()}] ADD_TO_CART - Item: ${itemId}, Quantity: ${quantity}`);
+    res.status(200).send('Item added to cart');
 });
 
-app.get("/collection/:collectionName", (req, res, next) => {
-  req.collection.find({}).toArray((e, results) => {
-    if (e) return next(e);
-    res.send(results);
-  });
+app.post('/submit-order', (req, res) => {
+    const { orderId, userId } = req.body;
+    console.log(`[${new Date().toISOString()}] SUBMIT_ORDER - OrderID: ${orderId}, UserID: ${userId}`);
+    res.status(200).send('Order submitted');
 });
 
-app.post("/collection/:collectionName", (req, res, next) => {
-  req.collection.insertOne(req.body, (e, result) => {
-    if (e) return next(e);
-    res.send(result.ops[0]);
-  });
+var imagePath = path.resolve(__dirname, 'images');
+app.use (express.static(imagePath));
+app.use(function (request, response){
+    response.writeHead(200,{
+        'Content-Type': 'text/html'
+    });
+    response.end("Looks like you didn't find a static file.");
 });
-
-app.get("/collection/:collectionName/:id", (req, res, next) => {
-  req.collection.findOne({ _id: new ObjectID(req.params.id) }, (e, result) => {
-    if (e) return next(e);
-    res.send(result);
-  });
-});
-
-app.put("/collection/:collectionName/:id", (req, res, next) => {
-  req.collection.updateOne(
-    { _id: new ObjectID(req.params.id) },
-    { $set: req.body },
-    { safe: true },
-    (e, result) => {
-      if (e) return next(e);
-      res.send(result.matchedCount === 1 ? { msg: "success" } : { msg: "error" });
-    }
-  );
-});
-
-app.delete("/collection/:collectionName/:id", (req, res, next) => {
-  req.collection.deleteOne({ _id: new ObjectID(req.params.id) }, (e, result) => {
-    if (e) return next(e);
-    res.send(result.deletedCount === 1 ? { msg: "success" } : { msg: "error" });
-  });
-});
-
-app.post("/place-order", (req, res) => {
-  const ordersCollection = db.collection("orders");
-  const order = req.body;
-
-  if (
-    !order.firstName ||
-    !order.lastName ||
-    !order.address ||
-    !order.city ||
-    !order.state ||
-    !order.zip ||
-    !order.phone ||
-    !order.cart ||
-    order.cart.length === 0
-  ) {
-    return res.status(400).send({ msg: "Invalid order data" });
-  }
-
-  order.date = new Date();
-
-  ordersCollection.insertOne(order, (err, result) => {
-    if (err) {
-      console.error("Error placing order:", err);
-      return res.status(500).send({ msg: "Failed to place order" });
-    }
-    res.send({ msg: "Order placed successfully", orderId: result.insertedId });
-  });
-});
-
-const port = process.env.PORT || 3000;
+// Start server
+const port = process.env.PORT || 3000
 app.listen(port, () => {
-  console.log(`Server running on port ${port}`);
+    console.log(`Express.js server running at http://localhost:${port}`);
 });
