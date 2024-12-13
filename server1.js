@@ -1,31 +1,40 @@
-const express = require("express");
-const MongoClient = require('mongodb').MongoClient;
-const cors = require("cors"); // Import the cors package
+var express = require("express");
+var app = express();
 
-const app = express();
+// Logger middleware to log request method, URL, and IP address
+app.use(function (req, res, next) {
+  const method = req.method;
+  const url = req.originalUrl;
+  const ip = req.ip || req.connection.remoteAddress;
+  const timestamp = new Date().toISOString();
 
-// Use CORS middleware to enable cross-origin requests
-app.use(
-  cors({
-    origin: "https://sajidaitech.github.io", // Allow requests from your frontend
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"], // Allow these methods
-    credentials: true, // Allow cookies or credentials if necessary
-  })
-);
+  console.log(`[${timestamp}] ${method} ${url} - IP: ${ip}`);
+  next();
+});
 
-app.use(express.json());
-app.set("port", 3000);
+// CORS middleware to allow cross-origin requests
 app.use((req, res, next) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Credentials", "true");
-  res.setHeader("Access-Control-Allow-Methods", "GET,HEAD,OPTIONS,POST,PUT");
+  res.setHeader(
+    "Access-Control-Allow-Methods",
+    "GET,HEAD,OPTIONS,POST,PUT,DELETE"
+  );
   res.setHeader(
     "Access-Control-Allow-Headers",
-    "Access-Control-Allow-Headers, Origin,Accept, X-Requested-With, Content-Type, Access-Control-Request-Method, Access-Control-Request-Headers"
+    "Origin, X-Requested-With, Content-Type, Accept, Authorization"
   );
+
+  // Handle preflight OPTIONS requests
+  if (req.method === "OPTIONS") {
+    return res.status(200).end();
+  }
 
   next();
 });
+
+app.use(express.json());
+
 
 // Function to log the current time
 function logCurrentTime() {
@@ -42,7 +51,10 @@ function logCurrentTime() {
   return time.toLocaleDateString("en-US", options);
 }
 
+
+const MongoClient = require('mongodb').MongoClient;
 let db;
+
 MongoClient.connect(
   "mongodb+srv://sajidteech:Qatar2024@mongo.ovhek.mongodb.net/",
   (err, client) => {
