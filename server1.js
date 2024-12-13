@@ -1,19 +1,20 @@
 const express = require("express");
-const app = express();
 const MongoClient = require('mongodb').MongoClient;
+const cors = require("cors"); // Import the cors package
+
+const app = express();
+
+// Use CORS middleware to enable cross-origin requests
+app.use(
+  cors({
+    origin: "https://sajidaitech.github.io", // Allow requests from your frontend
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"], // Allow these methods
+    credentials: true, // Allow cookies or credentials if necessary
+  })
+);//
 
 app.use(express.json());
-app.use((req, res, next) => {
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Credentials", "true");
-  res.setHeader("Access-Control-Allow-Methods", "GET,HEAD,OPTIONS,POST,PUT");
-  res.setHeader(
-    "Access-Control-Allow-Headers",
-    "Access-Control-Allow-Headers, Origin,Accept, X-Requested-With, Content-Type, Access-Control-Request-Method, Access-Control-Request-Headers"
-  );
-
-  next();
-});
+app.set("port", 3000);
 
 // Function to log the current time
 function logCurrentTime() {
