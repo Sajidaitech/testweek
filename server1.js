@@ -11,7 +11,7 @@ app.use(
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"], // Allow these methods
     credentials: true, // Allow cookies or credentials if necessary
   })
-);
+);//
 
 app.use(express.json());
 app.set("port", 3000);
