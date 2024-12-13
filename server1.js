@@ -1,6 +1,6 @@
 const express = require("express");
 const app = express();
-const { MongoClient } = require("mongodb");
+const MongoClient = require('mongodb').MongoClient;
 
 app.use(express.json());
 app.use((req, res, next) => {
